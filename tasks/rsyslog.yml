@@ -14,14 +14,8 @@
 - name: copy config over. syslog facts must be gather
   template: src=rsyslog.conf dest=/etc/rsyslog.d/rsyslog.conf
 
-- name: add ca servers key and insert iptables exception to the top of the rules chain so we can transfer files
-  lineinfile: dest=/root/.ssh/authorized_keys state=present line={{ capublickey }}
-
 - name: get certs
   include: makecert.yml
-
-- name: remove ca servers key and delete ip tables rule allowing traffic
-  lineinfile: dest=/root/.ssh/authorized_keys state=absent line={{ capublickey }}
 
 - name: need to make the privat key readable for centos 5 specifically. this can be skipped otherwise
   shell: mv -f /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem{,.bad} ; certtool --password "" -8 -k --infile /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem.bad > /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem
