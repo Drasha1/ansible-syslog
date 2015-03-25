@@ -46,7 +46,6 @@ CA
     stateOrProvinceName_default=Arizona
     localityName_default=Phoenix 
     organizationalUnitName_default=CompanyName
-    capublickey="key"
 
   files
     /home/ca/CA/cacert.pem        || ca cert this can be freely distrubted and is on all of our servers that are doing syslog over tls
