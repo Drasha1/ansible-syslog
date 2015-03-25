@@ -13,7 +13,7 @@
   template: src=syslog-ng.conf dest=/etc/syslog-ng/conf.d/syslog-ng.conf
 
 - name: get certs
-  include: /home/ansible/roles/caserver/tasks/makecert.yml
+  include: makecert.yml
 
 - name: reload syslog-ng
   service: name=syslog-ng state=restarted enabled=yes
