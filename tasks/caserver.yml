@@ -5,8 +5,8 @@
 - name: install rsync for synchronize module
   yum: name=rsync state=latest
 
-- name: add key for rsync
-  copy: src=id_rsa dest=/root/.ssh/ mode=0600
+#- name: add key for rsync
+#  copy: src=id_rsa dest=/root/.ssh/ mode=0600
 
 - name: ca user
   user: name=ca state=present shell=/sbin/nologin
