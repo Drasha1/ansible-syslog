@@ -9,6 +9,9 @@
     - cert.d
     - conf.d
 
+- name: log directory
+  file: path=/var/log/remotelogs state=directory
+
 - name: copy config file over
   template: src=syslog-ng.conf dest=/etc/syslog-ng/conf.d/syslog-ng.conf
 
