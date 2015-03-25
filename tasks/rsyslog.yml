@@ -1,0 +1,31 @@
+---
+- name: setup repo
+  copy: src=rsyslog.repo dest=/etc/yum.repos.d/syslog.repo
+
+- name: install rsyslog 7
+  yum: name=rsyslog,rsyslog-gnutls,gnutls-utils state=latest
+
+- name: file structure
+  file: path=/etc/pki/rsyslog/{{ item }} state=directory
+  with_items:
+    - ca.d
+    - cert.d
+
+- name: copy config over. syslog facts must be gather
+  template: src=rsyslog.conf dest=/etc/rsyslog.d/rsyslog.conf
+
+- name: add ca servers key and insert iptables exception to the top of the rules chain so we can transfer files
+  lineinfile: dest=/root/.ssh/authorized_keys state=present line={{ capublickey }}
+
+- name: get certs
+  include: makecert.yml
+
+- name: remove ca servers key and delete ip tables rule allowing traffic
+  lineinfile: dest=/root/.ssh/authorized_keys state=absent line={{ capublickey }}
+
+- name: need to make the privat key readable for centos 5 specifically. this can be skipped otherwise
+  shell: mv -f /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem{,.bad} ; certtool --password "" -8 -k --infile /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem.bad > /etc/pki/rsyslog/cert.d/{{ ansible_default_ipv4.address }}key.pem
+  when: ansible_distribution == "CentOS" and ansible_distribution_version.split(".")[0] == "5"
+
+- name: resteart rsyslog
+  service: name=rsyslog state=restarted enabled=yes

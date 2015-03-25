@@ -1,0 +1,19 @@
+---
+- name: yum install syslog-ng
+  yum: name=syslog-ng,php,php-mysql,syslog-ng-libdbi state=latest
+
+- name: file structure
+  file: path=/etc/syslog-ng/{{ item }} state=directory
+  with_items:
+    - ca.d
+    - cert.d
+    - conf.d
+
+- name: copy config file over
+  template: src=syslog-ng.conf dest=/etc/syslog-ng/conf.d/syslog-ng.conf
+
+- name: get certs
+  include: /home/ansible/roles/caserver/tasks/makecert.yml
+
+- name: reload syslog-ng
+  service: name=syslog-ng state=restarted enabled=yes

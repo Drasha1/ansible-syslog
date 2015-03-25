@@ -1,0 +1,36 @@
+---
+- name: install openssl
+  yum: name=openssl state=latest
+
+- name: install rsync for synchronize module
+  yum: name=rsync state=latest
+
+- name: add key for rsync
+  copy: src=id_rsa dest=/root/.ssh/ mode=0600
+
+- name: ca user
+  user: name=ca state=present shell=/sbin/nologin
+
+- name: setup ca directory
+  file: path=/home/ca/{{ item }} state=directory
+  with_items:
+    - CA
+    - CA/private
+    - CA/newcerts
+
+- name: add openssl.conf
+  template: src=openssl.conf dest=/home/ca/CA/
+
+- name: add index.txt
+  copy: src=index.txt dest=/home/ca/CA/ force=no
+
+- name: add serial
+  copy: src=serial dest=/home/ca/CA/ force=no
+
+- name: check if cert exists
+  stat: path=/home/ca/CA/cacert.pem
+  register: cacert
+
+- name: create ca cert
+  shell: cd /home/ca/CA && openssl req -new -nodes -x509 -keyout private/cakey.pem -out cacert.pem -days 3650 -config openssl.conf -subj "/C={{ countryName_default }}/ST={{ stateOrProvinceName_default }}/L={{ localityName_default }}/O={{ organizationalUnitName_default }}/CN={{ ansible_default_ipv4.address }}"
+  when: cacert.stat.exists == false

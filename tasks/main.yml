@@ -1,0 +1,13 @@
+---
+- name: create ca if this is a ca server
+  include: caserver.yml
+  when: "'ca' in group_names"
+
+- name: create the syslog-ng server if this is the central server
+  include: syslogng.yml
+  when: "'syslogng' in group_names"
+
+- name: install rsyslog for send logs
+  include: rsyslog.yml
+  when: "'syslogng' not in group_names"
+

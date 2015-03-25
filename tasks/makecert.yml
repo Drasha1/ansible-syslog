@@ -1,0 +1,70 @@
+---
+- name: check if cert exists
+  stat: path=/home/ca/CA/newcerts/{{ ansible_default_ipv4.address }}crt.pem
+  register: cert
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+
+- name: check if this is a rsyslog server
+  command: rpm -q rsyslog
+  register: rsyslog_check
+  ignore_errors: True
+
+- name: check if this is a syslog-ng server
+  command: rpm -q syslog-ng
+  register: syslog_ng_check
+  ignore_errors: True
+
+- name: default path
+  set_fact: path="/root/"
+
+- name: set paste path for rsyslog
+  set_fact: path="/etc/pki/rsyslog/"
+  when: rsyslog_check.rc == 0
+
+- name: set paste path for syslog-ng
+  set_fact: path="/etc/syslog-ng/"
+  when: syslog_ng_check.rc == 0
+
+- name: make and sign cert if it does not
+  shell: cd /home/ca/CA && openssl req -nodes -new -keyout private/{{ ansible_default_ipv4.address }}key.pem -out {{ ansible_default_ipv4.address }}req.pem -days 3650 -config openssl.conf -subj "/C={{ countryName_default }}/ST={{ stateOrProvinceName_default }}/L={{ localityName_default }}/O={{ organizationalUnitName_default }}/CN={{ ansible_default_ipv4.address }}" && openssl ca -batch -config openssl.conf -out newcerts/{{ ansible_default_ipv4.address }}crt.pem -infiles {{ ansible_default_ipv4.address }}req.pem && openssl verify -CAfile cacert.pem newcerts/{{ ansible_default_ipv4.address }}crt.pem
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+  when: cert.results[0].stat.exists == false
+
+- name: remove req file
+  file: path=/home/ca/CA/{{ ansible_default_ipv4.address }}req.pem  state=absent
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+  when: cert.results[0].stat.exists == false
+
+- name: add public key for sync
+  lineinfile: dest=/root/.ssh/authorized_keys state=present line={{ capublickey }}
+
+- name: get cert
+  synchronize: rsync_timeout=60 mode=push src=/home/ca/CA/newcerts/{{ ansible_default_ipv4.address }}crt.pem dest={{ path }}cert.d/{{ ansible_default_ipv4.address }}crt.pem
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+
+- name: get key
+  synchronize: rsync_timeout=60 mode=push src=/home/ca/CA/private/{{ ansible_default_ipv4.address }}key.pem dest={{ path }}cert.d/{{ ansible_default_ipv4.address }}key.pem
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+
+- name: get ca
+  synchronize: rsync_timeout=60 mode=push src=/home/ca/CA/cacert.pem dest={{ path }}ca.d/cacert.pem
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+
+- name: setup link
+  command: openssl x509 -noout -hash -in /home/ca/CA/cacert.pem
+  delegate_to: "{{ item }}"
+  with_items: groups.ca
+  register: symlink
+
+- name: create symlink
+  file: src={{ path }}ca.d/cacert.pem path={{ path }}ca.d/{{ symlink.results[0].stdout }}.0 state=link
+
+- name: add public key for sync
+  lineinfile: dest=/root/.ssh/authorized_keys state=absent line={{ capublickey }}
+
