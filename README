@@ -38,7 +38,7 @@ Syslog
 CA
   Overview
     The stuff for setting up a CA could be its own role but for now its part of the syslog role
-    You are going to need a server in the caserver group
+    You are going to need a server in the ca group
     you are also going to need to generate a id_rsa key and add it to this role as well as put the public key for it in the capublickey variable
   
   Ansible Variables
@@ -78,7 +78,7 @@ Example Setup
   This would setup server1 to be the central log server and it would store the ca certifcate. server2 would be setup to send logs to server1
   [syslogng]
   server1
-  [caserver]
+  [ca]
   server1
 
   ---
