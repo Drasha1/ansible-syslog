@@ -1,6 +1,6 @@
 ---
 - name: yum install syslog-ng
-  yum: name=syslog-ng,php,php-mysql,syslog-ng-libdbi state=latest
+  yum: name=syslog-ng,php,php-mysql,syslog-ng-libdbi,rsync state=latest
 
 - name: file structure
   file: path=/etc/syslog-ng/{{ item }} state=directory

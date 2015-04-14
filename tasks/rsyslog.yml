@@ -3,7 +3,7 @@
   copy: src=rsyslog.repo dest=/etc/yum.repos.d/syslog.repo
 
 - name: install rsyslog 7
-  yum: name=rsyslog,rsyslog-gnutls,gnutls-utils state=latest
+  yum: name=rsyslog,rsyslog-gnutls,gnutls-utils,rsync state=latest
 
 - name: file structure
   file: path=/etc/pki/rsyslog/{{ item }} state=directory
